@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>极简贪吃蛇（手机必显）</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { padding: 10px; background: #f5f5f5; }
+        h1 { text-align: center; color: #333; font-size: 24px; margin-bottom: 10px; }
+        .game { width: 100%; max-width: 350px; margin: 0 auto; border: 2px solid #333; background: #fff; }
+        .row { display: flex; }
+        .cell { width: 15px; height: 15px; border: 1px solid #eee; }
+        .snake { background: #00cc00 !important; }
+        .food { background: #ff3333 !important; }
+        .score { text-align: center; font-size: 18px; margin: 10px 0; }
+        .btns { width: 200px; margin: 15px auto; }
+        button { width: 60px; height: 60px; font-size: 24px; margin: 5px; border: none; border-radius: 8px; background: #333; color: #fff; }
+        .restart { width: 150px; height: 40px; font-size: 16px; display: block; margin: 10px auto; background: #ff6600; }
+    </style>
+</head>
+<body>
+    <h1>贪吃蛇</h1>
+    <div class="score">得分: <span id="score">0</span></div>
+    <div class="game" id="game"></div>
+    
+    <div class="btns">
+        <button onclick="setDir(0,-1)">↑</button><br>
+        <button onclick="setDir(-1,0)">←</button>
+        <button onclick="setDir(1,0)">→</button><br>
+        <button onclick="setDir(0,1)">↓</button>
+    </div>
+    <button class="restart" onclick="resetGame()">重新开始</button>
+
+    <script>
+        // 游戏配置（极简逻辑，无复杂渲染）
+        const size = 20; // 20x20网格
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 5, y: 5};
+        let dx = 1, dy = 0;
+        let score = 0;
+        let gameLoop;
+
+        // 创建游戏网格（用div代替canvas，100%兼容）
+        function createGrid() {
+            const game = document.getElementById('game');
+            game.innerHTML = '';
+            for (let y = 0; y < size; y++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let x = 0; x < size; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    // 标记蛇和食物
+                    snake.forEach(seg => seg.x === x && seg.y === y && cell.classList.add('snake'));
+                    if (food.x === x && food.y === y) cell.classList.add('food');
+                    row.appendChild(cell);
+                }
+                game.appendChild(row);
+            }
+        }
+
+        // 移动蛇
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            // 穿墙逻辑
+            head.x = head.x < 0 ? size-1 : head.x >= size ? 0 : head.x;
+            head.y = head.y < 0 ? size-1 : head.y >= size ? 0 : head.y;
+            // 撞自己游戏结束
+            if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+                clearInterval(gameLoop);
+                alert('游戏结束！得分：' + score);
+                return;
+            }
+            snake.unshift(head);
+            // 吃食物加分
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('score').textContent = score;
+                // 随机生成食物
+                food = {x: Math.floor(Math.random()*size), y: Math.floor(Math.random()*size)};
+            } else snake.pop();
+            createGrid();
+        }
+
+        // 控制方向
+        function setDir(newDx, newDy) {
+            // 防反向
+            if ((dx + newDx) !== 0 && (dy + newDy) !== 0) {
+                dx = newDx;
+                dy = newDy;
+            }
+        }
+
+        // 重置游戏
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            food = {x: 5, y: 5};
+            dx = 1; dy = 0;
+            score = 0;
+            document.getElementById('score').textContent = score;
+            clearInterval(gameLoop);
+            gameLoop = setInterval(moveSnake, 200);
+            createGrid();
+        }
+
+        // 启动游戏
+        resetGame();
+    </script>
+</body>
+</html>
